@@ -50,6 +50,7 @@ galaxy_info:
   platforms:
     - name: RedHat
       versions:
+        - amazon
         - centos
     - name: Debian
       versions:
