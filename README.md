@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/IRMooBear/ansible.common.svg?branch=master)](https://travis-ci.org/IRMooBear/ansible.common)
+
 Common
 =========
 
