@@ -1,0 +1,49 @@
+---
+- name: install pip
+  become: yes
+  apt:
+    name: python-pip
+    state: present
+  register: result
+  retries: 3
+  delay: 10
+  until: not result.failed
+  when: ansible_os_family == 'Debian'
+- name: install pip
+  become: yes
+  yum:
+    name: python-pip
+    state: present
+  register: result
+  retries: 3
+  until: not result.failed
+  when: ansible_os_family == 'RedHat'
+- name: install pip tools
+  become: yes
+  pip:
+    name: awscli
+  register: result
+- name: create .aws directory
+  become: no
+  file:
+    dest: /home/{{ ansible_ssh_user }}/.aws
+    state: directory
+    mode: 0700
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+- name: copy aws credentials template
+  become: no
+  template:
+    src: credentials.ini
+    dest: /home/{{ ansible_user }}/.aws/credentials
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0600
+- name: copy aws config template
+  become: no
+  template:
+    src: aws.config.ini
+    dest: /home/{{ ansible_user }}/.aws/config
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0600

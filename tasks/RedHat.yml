@@ -1,0 +1,65 @@
+---
+- name: Update server to latest installed yum packages
+  become: yes
+  yum:
+    name: '*'
+    state: latest
+    update_cache: true
+  register: result
+  retries: 3
+  delay: 10
+  until: not result.failed
+  notify:
+    - reboot
+- name: install common system admin tools
+  become: yes
+  yum:
+    state: present
+    name: "{{ common_config[ansible_os_family].admin_tool_packages }}"
+  register: result
+  retries: 3
+  delay: 10
+  until: not result.failed
+- name: install common system services
+  become: yes
+  yum:
+    state: present
+    name: "{{ common_config[ansible_os_family].system_service_packages }}"
+  register: result
+  retries: 3
+  delay: 10
+  until: not result.failed
+- name: install common dependencies
+  become: yes
+  yum:
+    state: present
+    name: "{{ common_config[ansible_os_family].dependency_packages }}"
+  register: result
+  retries: 3
+  delay: 10
+  until: not result.failed
+- name: yum install development group
+  become: yes
+  yum:
+    name: "@Development"
+    state: present
+  register: result
+  retries: 3
+  delay: 10
+  until: not result.failed
+- name: copy crond environment
+  become: yes
+  template:
+    src: ec2-user.cron.ini
+    dest: /var/spool/cron/ec2-user
+    mode: 0600
+- name: import PGP keys
+  become: yes
+  command: gpg2 --import /usr/local/share/pgp/{{ item.path }}
+  with_filetree: pgp/
+- name: import PGP keys to RPM
+  become: yes
+  rpm_key:
+    state: present
+    key: /usr/local/share/pgp/{{ item.path }}
+  with_filetree: pgp/

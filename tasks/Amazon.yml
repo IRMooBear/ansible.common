@@ -1,0 +1,9 @@
+---
+- name: install EPEL repo
+  become: yes
+  yum:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    state: present
+  register: result
+  retries: 3
+  until: not result.failed

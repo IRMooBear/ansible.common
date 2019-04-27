@@ -1,0 +1,102 @@
+---
+- name: make pgp folder
+  become: yes
+  file:
+    path: /usr/local/share/pgp
+    state: directory
+    owner: root
+    group: root
+    mode: 0744
+- name: copy pgp key files
+  become: yes
+  copy:
+    src: "{{ item.src }}"
+    dest: /usr/local/share/pgp/{{ item.path }}
+    owner: root
+    group: root
+    mode: 0644
+  with_filetree: pgp/
+- import_tasks: Amazon.yml
+  when: ansible_os_family == 'RedHat' and ansible_distribution == 'Amazon'
+- import_tasks: RedHat.yml
+  when: ansible_os_family == 'RedHat'
+- import_tasks: Debian.yml
+  when: ansible_os_family == 'Debian'
+- import_tasks: install_aws_cli.yml
+  when: install_aws_cli
+- name: set host name
+  become: yes
+  template:
+    src: hostname.ini
+    dest: /etc/hostname
+- name: set time zone
+  become: yes
+  file:
+    src: /usr/share/zoneinfo/{{ timezone }}
+    path: /etc/localtime
+    owner: root
+    group: root
+    state: link
+    force: yes
+- name: change nanorc to use 4 spaces
+  become: yes
+  blockinfile:
+    path: /etc/nanorc
+    block: |
+      set tabsize 4
+- name: add email to alias
+  become: yes
+  blockinfile:
+    dest: /etc/aliases
+    block: |
+      root: {{ email }}
+      {{ ansible_user }}: {{ email }}
+      nginx: {{ email }}
+- name: set sendmail relay smart host
+  become: yes
+  blockinfile:
+    dest: /etc/mail/sendmail.mc
+    insertafter: "^MAILER_DEFINITIONS$"
+    block: |
+      # Slanted begining quote FTL...
+      define(`SMART_HOST', `{{ smtp_relay }}')dnl
+  notify:
+    - make sendmail config
+  when: smtp_relay is defined and smtp_relay != ""
+- name: generate ssh key for users
+  become: yes
+  user:
+    name: "{{ item }}"
+    generate_ssh_key: yes
+    ssh_key_bits: 4096
+    ssh_key_file: .ssh/id_rsa
+  with_items:
+    - "{{ ansible_user }}"
+    - root
+- name: copy .gemrc
+  become: yes
+  copy:
+    src: .gemrc
+    dest: "{{ item.dest }}/.gemrc"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: 0600
+  loop:
+    - { dest: "/home/{{ ansible_user }}", owner: "{{ ansible_user }}", group: "{{ ansible_user }}" }
+    - { dest: /root, owner: root, group: root }
+- name: change message of the day
+  become: yes
+  template:
+    src: motd.ini
+    dest: /etc/motd
+  when: message_of_the_day is defined
+- name: add additional ssh keys to authorized_keys
+  become: yes
+  blockinfile:
+    path: /home/{{ ansible_user }}/.ssh/authorized_keys
+    block: |
+      {% for key in ssh_keys %}
+      {{ key }}
+      {% endfor %}
+  when: ssh_keys is defined
+- meta: flush_handlers

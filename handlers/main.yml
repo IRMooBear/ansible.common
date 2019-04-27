@@ -1,0 +1,23 @@
+---
+# handlers file for common
+- name: reboot
+  become: yes
+  reboot:
+
+  when: do_reboot is defined and do_reboot
+  notify:
+    - setup again
+- name: setup again
+  setup:
+- name: make sendmail config
+  become: yes
+  make:
+  args:
+    chdir: /etc/mail
+  notify:
+    - restart sendmail
+- name: restart sendmail
+  become: yes
+  service:
+    name: sendmail
+    state: restarted

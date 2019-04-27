@@ -1,0 +1,51 @@
+---
+aws_cli_output: text
+aws_region: us-west-2
+aws_access_key_id:
+aws_secret_access_key:
+
+install_aws_cli: no
+smtp_relay:
+email:
+
+common_config:
+  Debian:
+    packages:
+      - git
+      - psmisc
+      - uptimed
+      - build-essential
+      - screen
+      - libtool
+      - automake
+      - pkg-config
+      - raspberrypi-kernel-headers
+      - dh-autoreconf
+      - sendmail
+      - iotop
+      - p7zip-full
+      - logwatch
+  RedHat:
+    admin_tool_packages:
+      - htop
+      - iotop
+      - iftop
+      - mysql
+      - hdparm
+      - iptraf
+      - telnet
+      - p7zip
+      - logwatch
+    system_service_packages:
+      - sendmail
+      - sendmail-cf
+    dependency_packages:
+      - libyaml-devel
+      - readline-devel
+      - zlib-devel
+      - libffi-devel
+      - openssl-devel
+      - sqlite-devel
+      - libcurl-devel
+      - mysql-devel
+      - ImageMagick-devel

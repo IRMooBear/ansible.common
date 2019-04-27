@@ -1,0 +1,41 @@
+---
+- name: upgrade apt packages
+  become: yes
+  apt:
+    cache_valid_time: 86400
+    upgrade: yes
+  register: apt_upgrade
+  retries: 3
+  delay: 10
+  until: not apt_upgrade.failed
+  notify:
+    - reboot
+- name: upgrade apt dist
+  become: yes
+  apt:
+    upgrade: dist
+  register: apt_upgrade_dist
+  retries: 3
+  delay: 10
+  until: not apt_upgrade_dist.failed
+  notify:
+    - reboot
+- name: install common debian packages
+  become: yes
+  apt:
+    state: present
+    name: "{{ common_config[ansible_os_family].packages }}"
+  register: result
+  retries: 3
+  delay: 10
+  until: not result.failed
+- name: import PGP Keys
+  become: yes
+  command: gpg --import /usr/local/share/pgp/{{ item.path }}
+  with_filetree: pgp/
+- name: apt import PGP keys
+  become: yes
+  apt_key:
+    file: /usr/local/share/pgp/{{ item.path }}
+    state: present
+  with_filetree: pgp/
